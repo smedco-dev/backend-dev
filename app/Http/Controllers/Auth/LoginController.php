@@ -19,14 +19,15 @@ class LoginController extends Controller
         $validator = Validator::make($request->all(), [
             'personal_number' => 'required|numeric',
             'password' => 'required|string'
-        ], [
-            'personal_number.required' => 'The personal number cannot be empty.',
-            'personal_number.numeric' => 'The personal number must be a number.',
-            'password.required' => 'The password cannot be empty.'
         ]);
 
         if ($validator->fails()) {
-            return response()->json($validator->errors(), 401);
+            return response()->json([
+                'validation'      => $validator->errors(),
+                'response_code'   => '00',
+                'response_status' => true,
+                'date_request'    => Carbon::now('Asia/Jakarta')->toDateTimeString()
+            ], 401);
         }
 
         $user = User::where('personal_number', $request->personal_number)->first();
@@ -50,16 +51,18 @@ class LoginController extends Controller
             Mail::to($user->email)->send(new OtpEmail($otpCode));
 
             return response()->json([
-                'status' => 200,
-                'success' => true,
-                'access_token' => $token,
-                'message' => 'OTP code has been sent to ' . $user->email
+                'access_token'     => $token,
+                'response_code'    => '00',
+                'response_status'  => true,
+                'response_message' => 'OTP code has been sent to ' . $user->email,
+                'date_request'     => Carbon::now('Asia/Jakarta')->toDateTimeString()
             ], 200);
         } else {
             return response()->json([
-                'status' => 401,
-                'success' => false,
-                'message' => 'Your personal number or password is incorrect.'
+                'response_code'    => '01',
+                'response_status'  => false,
+                'response_message' => 'Your personal number or password is incorrect',
+                'date_request'     => Carbon::now('Asia/Jakarta')->toDateTimeString()
             ], 401);
         }
     }
