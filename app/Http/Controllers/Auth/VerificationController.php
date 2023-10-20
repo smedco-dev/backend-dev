@@ -16,12 +16,15 @@ class VerificationController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'otp' => 'required',
-        ], [
-            'otp.required' => 'The OTP code is required.',
         ]);
 
         if ($validator->fails()) {
-            return response()->json($validator->errors(), 400);
+            return response()->json([
+                'validation'      => $validator->errors(),
+                'response_code'   => '00',
+                'response_status' => true,
+                'date_request'    => Carbon::now('Asia/Jakarta')->toDateTimeString()
+            ], 401);
         }
 
         $user = $request->user();
@@ -39,22 +42,25 @@ class VerificationController extends Controller
                 }
 
                 return response()->json([
-                    'status' => 200,
-                    'success' => true,
-                    'message' => 'OTP verification successful.'
+                    'response_code'    => '00',
+                    'response_status'  => true,
+                    'response_message' => 'OTP verification successful',
+                    'date_request'     => Carbon::now('Asia/Jakarta')->toDateTimeString()
                 ], 200);
             } else {
                 return response()->json([
-                    'status' => 400,
-                    'success' => false,
-                    'message' => 'Invalid OTP code.'
+                    'response_code'    => '01',
+                    'response_status'  => false,
+                    'response_message' => 'Invalid OTP code',
+                    'date_request'     => Carbon::now('Asia/Jakarta')->toDateTimeString()
                 ], 400);
             }
         } else {
             return response()->json([
-                'status' => 400,
-                'success' => false,
-                'message' => 'No application token found.'
+                'response_code'    => '01',
+                'response_status'  => false,
+                'response_message' => 'No application token found',
+                'date_request'     => Carbon::now('Asia/Jakarta')->toDateTimeString()
             ], 400);
         }
     }
@@ -84,15 +90,17 @@ class VerificationController extends Controller
             Mail::to($user->email)->send(new OtpEmail($newOtpCode));
 
             return response()->json([
-                'status' => 200,
-                'success' => true,
-                'message' => 'A new OTP code has been sent to ' . $user->email
+                'response_code'    => '00',
+                'response_status'  => true,
+                'response_message' => 'A new OTP code has been sent to ' . $user->email,
+                'date_request'     => Carbon::now('Asia/Jakarta')->toDateTimeString()
             ], 200);
         } else {
             return response()->json([
-                'status' => 400,
-                'success' => false,
-                'message' => 'No application token found.'
+                'response_code'    => '01',
+                'response_status'  => false,
+                'response_message' => 'No application token found',
+                'date_request'     => Carbon::now('Asia/Jakarta')->toDateTimeString()
             ], 400);
         }
     }
