@@ -9,49 +9,54 @@ use Illuminate\Support\Facades\Validator;
 
 class RoleController extends Controller
 {
-    public function index()
+    public static function RESPONSE_NOT_FOUND()
     {
-        try {
-            $roles = Role::all();
-            if ($roles->isEmpty()) {
-                return response()->json([
-                    'data_role' => [],
-                    'response_total' => 0,
-                    'response_code' => '00',
-                    'response_status' => true,
-                    'response_message' => 'Data not found',
-                    'date_request' => Carbon::now('Asia/Jakarta')->toDateTimeString()
-                ], 200);
-            }
+        return [
+            'data_role' => [],
+            'response_code' => '01',
+            'response_status' => false,
+            'response_message' => 'Data not found',
+            'date_request' => Carbon::now('Asia/Jakarta')->toDateTimeString()
+        ];
+    }
 
-            $result = [];
-            foreach ($roles as $role) {
-                $roleData = [
-                    'id' => $role->id,
-                    'name' => $role->name,
-                    'short_name' => $role->short_name,
-                    'total_users' => $role->users->count(),
-                    'created_at' => $role->created_at,
-                    'updated_at' => $role->updated_at,
-                ];
+    public function index(Request $request)
+    {
+        $search = $request->input('q');
+        $roles = Role::query();
 
-                $result[] = $roleData;
-            }
-
-            return response()->json([
-                'data_role' => $result,
-                'response_total' => count($result),
-                'response_code' => '00',
-                'response_status' => true,
-                'response_message' => 'Data found',
-                'date_request' => Carbon::now('Asia/Jakarta')->toDateTimeString()
-            ], 200);
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Internal Server Error',
-                'error' => $e->getMessage()
-            ], 500);
+        if (!empty($search)) {
+            $roles->where('name', 'LIKE', '%' . $search . '%')
+                ->orWhere('short_name', 'LIKE', '%' . $search . '%');
         }
+
+        $roles = $roles->get();
+        if ($roles->isEmpty()) {
+            return response()->json(self::RESPONSE_NOT_FOUND(), 404);
+        }
+
+        $result = [];
+        foreach ($roles as $role) {
+            $roleData = [
+                'id' => $role->id,
+                'name' => $role->name,
+                'short_name' => $role->short_name,
+                'total_users' => $role->users->count(),
+                'created_at' => $role->created_at,
+                'updated_at' => $role->updated_at,
+            ];
+
+            $result[] = $roleData;
+        }
+
+        return response()->json([
+            'data_role' => $result,
+            'response_total' => count($result),
+            'response_code' => '00',
+            'response_status' => true,
+            'response_message' => 'Data found',
+            'date_request' => Carbon::now('Asia/Jakarta')->toDateTimeString()
+        ], 200);
     }
 
     public function store(Request $request)
@@ -63,10 +68,10 @@ class RoleController extends Controller
 
         if ($validator->fails()) {
             return response()->json([
-                'errors'          => $validator->errors(),
-                'response_code'   => '00',
+                'errors' => $validator->errors(),
+                'response_code' => '00',
                 'response_status' => true,
-                'date_request'    => Carbon::now('Asia/Jakarta')->toDateTimeString()
+                'date_request' => Carbon::now('Asia/Jakarta')->toDateTimeString()
             ], 400);
         }
 
@@ -75,11 +80,11 @@ class RoleController extends Controller
             $role = Role::create($data);
 
             return response()->json([
-                'data_new_role'    => $role,
-                'response_code'    => '00',
-                'response_status'  => true,
+                'data_new_role' => $role,
+                'response_code' => '00',
+                'response_status' => true,
                 'response_message' => 'Role created successfully',
-                'date_request'     => Carbon::now('Asia/Jakarta')->toDateTimeString()
+                'date_request' => Carbon::now('Asia/Jakarta')->toDateTimeString()
             ], 201);
         } catch (\Exception $e) {
             return response()->json(['error' => 'An error occurred while creating Role' . $e], 500);
@@ -90,14 +95,9 @@ class RoleController extends Controller
     {
         try {
             $role = Role::find($id);
+
             if (!$role) {
-                return response()->json([
-                    'data_role' => [],
-                    'response_code' => '01',
-                    'response_status' => false,
-                    'response_message' => 'Data not found',
-                    'date_request' => Carbon::now('Asia/Jakarta')->toDateTimeString()
-                ], 404);
+                return response()->json(self::RESPONSE_NOT_FOUND(), 404);
             }
 
             $usersWithRole = $role->users()->select('id', 'personal_number', 'name', 'email')->get();
@@ -132,13 +132,7 @@ class RoleController extends Controller
             $role = Role::find($id);
 
             if (!$role) {
-                return response()->json([
-                    'data_role' => [],
-                    'response_code' => '01',
-                    'response_status' => false,
-                    'response_message' => 'Data not found',
-                    'date_request' => Carbon::now('Asia/Jakarta')->toDateTimeString()
-                ], 404);
+                return response()->json(self::RESPONSE_NOT_FOUND(), 404);
             }
 
             $validator = Validator::make($request->all(), [
@@ -177,13 +171,7 @@ class RoleController extends Controller
             $role = Role::find($id);
 
             if (!$role) {
-                return response()->json([
-                    'data_role' => [],
-                    'response_code' => '01',
-                    'response_status' => false,
-                    'response_message' => 'Data not found',
-                    'date_request' => Carbon::now('Asia/Jakarta')->toDateTimeString()
-                ], 404);
+                return response()->json(self::RESPONSE_NOT_FOUND(), 404);
             }
 
             $usersWithRole = $role->users;
